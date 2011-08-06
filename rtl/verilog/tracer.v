@@ -4,15 +4,15 @@
 ////                                                              ////
 ////  Description                                                 ////
 ////                                                              ////
-////  Logs the two signals 'trig0' and 'data0'                    ////
+////  Logs the signals 'trig0', 'data0', data1, ...               ////
 ////  after a trigger event has occurred.                         ////
 ////                                                              ////
 ////  WB interface:                                               ////
 ////  Write Address 0x0000, Arm the trigger                       ////
 ////  Read Address  0x0000 - 0x03ff, Read trig0 trace log         ////
 ////  Read Address  0x0400 - 0x07ff, Read data0 trace log         ////
-////  Read Address  0x0800 - 0x0Bff, Read data0 trace log         ////
-////  Read Address  0x0C00 - 0x0fff, Read data0 trace log         ////
+////  Read Address  0x0800 - 0x0bff, Read data1 trace log         ////
+////  Read Address  0x0C00 - 0x0fff, Read data2 trace log         ////
 ////                                                              ////
 ////  Author(s):                                                  ////
 ////    - Stefan Kristiansson, stefan.kristiansson@saunalahti.fi  ////
