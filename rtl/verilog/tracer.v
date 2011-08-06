@@ -154,7 +154,7 @@ module tracer(
       trig0_q <= trig0_i;
       data0_q <= data0_i;
       data1_q <= data1_i;
-      data2_q <= {wr_addr[9:2], data2_i[23:0]};
+      data2_q <= data2_i;
     end
 
     always @(posedge wb_clk_i) begin
