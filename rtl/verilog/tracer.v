@@ -1,48 +1,20 @@
-//////////////////////////////////////////////////////////////////////
-////                                                              ////
-////  Trace logger                                                ////
-////                                                              ////
-////  Description                                                 ////
-////                                                              ////
-////  Logs the signals 'trig0', 'data0', data1, ...               ////
-////  after a trigger event has occurred.                         ////
-////                                                              ////
-////  WB interface:                                               ////
-////  Write Address 0x0000, Arm the trigger                       ////
-////  Read Address  0x0000 - 0x03ff, Read trig0 trace log         ////
-////  Read Address  0x0400 - 0x07ff, Read data0 trace log         ////
-////  Read Address  0x0800 - 0x0bff, Read data1 trace log         ////
-////  Read Address  0x0C00 - 0x0fff, Read data2 trace log         ////
-////                                                              ////
-////  Author(s):                                                  ////
-////    - Stefan Kristiansson, stefan.kristiansson@saunalahti.fi  ////
-////                                                              ////
-//////////////////////////////////////////////////////////////////////
-////                                                              ////
-//// Copyright (C) 2011 Authors and OPENCORES.ORG                 ////
-////                                                              ////
-//// This source file may be used and distributed without         ////
-//// restriction provided that this copyright statement is not    ////
-//// removed from the file and that any derivative work contains  ////
-//// the original copyright notice and the associated disclaimer. ////
-////                                                              ////
-//// This source file is free software; you can redistribute it   ////
-//// and/or modify it under the terms of the GNU Lesser General   ////
-//// Public License as published by the Free Software Foundation; ////
-//// either version 2.1 of the License, or (at your option) any   ////
-//// later version.                                               ////
-////                                                              ////
-//// This source is distributed in the hope that it will be       ////
-//// useful, but WITHOUT ANY WARRANTY; without even the implied   ////
-//// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR      ////
-//// PURPOSE.  See the GNU Lesser General Public License for more ////
-//// details.                                                     ////
-////                                                              ////
-//// You should have received a copy of the GNU Lesser General    ////
-//// Public License along with this source; if not, download it   ////
-//// from http://www.opencores.org/lgpl.shtml                     ////
-////                                                              ////
-//////////////////////////////////////////////////////////////////////
+/*
+ * Trace logger
+ *
+ * Description
+ *
+ * Logs the signals 'trig0', 'data0', data1, ...
+ * after a trigger event has occurred.
+ *
+ * WB interface:
+ * Write Address 0x0000, Arm the trigger
+ * Read Address  0x0000 - 0x03ff, Read trig0 trace log
+ * Read Address  0x0400 - 0x07ff, Read data0 trace log
+ * Read Address  0x0800 - 0x0bff, Read data1 trace log
+ * Read Address  0x0C00 - 0x0fff, Read data2 trace log
+ *
+ * (C) 2013, Stefan Kristiansson, stefan.kristiansson@saunalahti.fi
+ */
 `timescale 1ns / 1ps
 
 module tracer(
@@ -77,12 +49,12 @@ module tracer(
     reg         new_trig;
     // Read
     assign wb_dat_o = (wb_adr_i[13:12] == 2'b00) ? trig0_rd :
-                      (wb_adr_i[13:12] == 2'b01) ? data0_rd : 
-                      (wb_adr_i[13:12] == 2'b10) ? data1_rd : 
-                      (wb_adr_i[13:12] == 2'b11) ? data2_rd : 
+                      (wb_adr_i[13:12] == 2'b01) ? data0_rd :
+                      (wb_adr_i[13:12] == 2'b10) ? data1_rd :
+                      (wb_adr_i[13:12] == 2'b11) ? data2_rd :
                       32'b0;
 
-    // Write 
+    // Write
     always @(posedge wb_clk_i) begin
       new_trig <= 0;
       if (wb_rst_i)
@@ -102,24 +74,23 @@ module tracer(
         wb_ack_o <= 0;
       else if (wb_cyc_i & wb_stb_i & !wb_ack_o)
         wb_ack_o <= 1;
-     
+
     assign wb_err_o = 0;
     assign wb_rty_o = 0;
-    
-    
+
     //--------------------------------------------------------------------------
     // Trigger
     //--------------------------------------------------------------------------
     reg [11:2] mem_pos;
     reg        running;
     reg        done;
-    
+
     always @(posedge wb_clk_i)
       if (wb_rst_i | new_trig)
         running <= 0;
       else if (trig0_i == trigger)
         running <= 1;
-        
+
     always @(posedge wb_clk_i)
       if (wb_rst_i | new_trig)
         mem_pos <= 0;
@@ -131,8 +102,8 @@ module tracer(
         done <= 0;
       else if (&mem_pos)
         done <= 1;
-  
-    
+
+
     //--------------------------------------------------------------------------
     // Logging logic (Block RAM's)
     //--------------------------------------------------------------------------
@@ -148,7 +119,7 @@ module tracer(
     wire [11:2] wr_addr;
 
     assign wr_addr = mem_pos;
-    assign wr_en   = running & !done;  
+    assign wr_en   = running & !done;
 
     always @(posedge wb_clk_i) begin
       trig0_q <= trig0_i;
