@@ -18,126 +18,125 @@
 `timescale 1ns / 1ps
 
 module tracer(
-    // WB
-    input  wire        wb_rst_i,
-    input  wire        wb_clk_i,
-    input  wire [31:0] wb_dat_i,
-    input  wire [13:2] wb_adr_i,
-    input  wire [3:0]  wb_sel_i,
-    input  wire        wb_we_i,
-    input  wire        wb_cyc_i,
-    input  wire        wb_stb_i,
-    output wire [31:0] wb_dat_o,
-    output reg         wb_ack_o,
-    output wire        wb_err_o,
-    output wire        wb_rty_o,
+	      // WB
+	      input wire 	 wb_rst_i,
+	      input wire 	 wb_clk_i,
+	      input wire [31:0]  wb_dat_i,
+	      input wire [13:2]  wb_adr_i,
+	      input wire [3:0] 	 wb_sel_i,
+	      input wire 	 wb_we_i,
+	      input wire 	 wb_cyc_i,
+	      input wire 	 wb_stb_i,
+	      output wire [31:0] wb_dat_o,
+	      output reg 	 wb_ack_o,
+	      output wire 	 wb_err_o,
+	      output wire 	 wb_rty_o,
 
-    // Tracer signals
-    input wire [31:0]  trig0_i,
-    input wire [31:0]  data0_i,
-    input wire [31:0]  data1_i,
-    input wire [31:0]  data2_i
+	      // Tracer signals
+	      input wire [31:0]  trig0_i,
+	      input wire [31:0]  data0_i,
+	      input wire [31:0]  data1_i,
+	      input wire [31:0]  data2_i
 );
-    //--------------------------------------------------------------------------
-    // Wishbone
-    //--------------------------------------------------------------------------
-    reg  [31:0] trigger;
-    reg  [31:0] trig0_rd;
-    reg  [31:0] data0_rd;
-    reg  [31:0] data1_rd;
-    reg  [31:0] data2_rd;
-    reg         new_trig;
-    // Read
-    assign wb_dat_o = (wb_adr_i[13:12] == 2'b00) ? trig0_rd :
-                      (wb_adr_i[13:12] == 2'b01) ? data0_rd :
-                      (wb_adr_i[13:12] == 2'b10) ? data1_rd :
-                      (wb_adr_i[13:12] == 2'b11) ? data2_rd :
-                      32'b0;
+   //---------------------------------------------------------------------------
+   // Wishbone
+   //---------------------------------------------------------------------------
+   reg [31:0] 			 trigger;
+   reg [31:0] 			 trig0_rd;
+   reg [31:0] 			 data0_rd;
+   reg [31:0] 			 data1_rd;
+   reg [31:0] 			 data2_rd;
+   reg 				 new_trig;
+   // Read
+   assign wb_dat_o = (wb_adr_i[13:12] == 2'b00) ? trig0_rd :
+                     (wb_adr_i[13:12] == 2'b01) ? data0_rd :
+                     (wb_adr_i[13:12] == 2'b10) ? data1_rd :
+                     (wb_adr_i[13:12] == 2'b11) ? data2_rd :
+                     32'b0;
 
-    // Write
-    always @(posedge wb_clk_i) begin
+   // Write
+   always @(posedge wb_clk_i) begin
       new_trig <= 0;
       if (wb_rst_i)
-        trigger <= 32'h00000000;
+	trigger <= 32'h00000000;
       else if (wb_stb_i & wb_cyc_i & wb_we_i)
-        if (wb_adr_i == 0) begin
-          trigger  <= wb_dat_i;
-          new_trig <= 1;
-        end
-    end
+	if (wb_adr_i == 0) begin
+	   trigger  <= wb_dat_i;
+	   new_trig <= 1;
+	end
+   end
 
-    // Ack generation
-    always @(posedge wb_clk_i)
-      if (wb_rst_i)
-        wb_ack_o <= 0;
-      else if (wb_ack_o)
-        wb_ack_o <= 0;
-      else if (wb_cyc_i & wb_stb_i & !wb_ack_o)
-        wb_ack_o <= 1;
+   // Ack generation
+   always @(posedge wb_clk_i)
+     if (wb_rst_i)
+       wb_ack_o <= 0;
+     else if (wb_ack_o)
+       wb_ack_o <= 0;
+     else if (wb_cyc_i & wb_stb_i & !wb_ack_o)
+       wb_ack_o <= 1;
 
-    assign wb_err_o = 0;
-    assign wb_rty_o = 0;
+   assign wb_err_o = 0;
+   assign wb_rty_o = 0;
 
-    //--------------------------------------------------------------------------
-    // Trigger
-    //--------------------------------------------------------------------------
-    reg [11:2] mem_pos;
-    reg        running;
-    reg        done;
+   //---------------------------------------------------------------------------
+   // Trigger
+   //---------------------------------------------------------------------------
+   reg [11:2] mem_pos;
+   reg 	      running;
+   reg        done;
 
-    always @(posedge wb_clk_i)
-      if (wb_rst_i | new_trig)
-        running <= 0;
-      else if (trig0_i == trigger)
-        running <= 1;
+   always @(posedge wb_clk_i)
+     if (wb_rst_i | new_trig)
+       running <= 0;
+     else if (trig0_i == trigger)
+       running <= 1;
 
-    always @(posedge wb_clk_i)
-      if (wb_rst_i | new_trig)
-        mem_pos <= 0;
-      else if (running & !(&mem_pos))
-        mem_pos <= mem_pos + 1;
+   always @(posedge wb_clk_i)
+     if (wb_rst_i | new_trig)
+       mem_pos <= 0;
+     else if (running & !(&mem_pos))
+       mem_pos <= mem_pos + 1;
 
-    always @(posedge wb_clk_i)
-      if (wb_rst_i | new_trig)
-        done <= 0;
-      else if (&mem_pos)
-        done <= 1;
+   always @(posedge wb_clk_i)
+     if (wb_rst_i | new_trig)
+       done <= 0;
+     else if (&mem_pos)
+       done <= 1;
 
+   //---------------------------------------------------------------------------
+   // Logging logic (Block RAM's)
+   //---------------------------------------------------------------------------
+   reg [31:0] trig0_mem[1023:0];
+   reg [31:0] data0_mem[1023:0];
+   reg [31:0] data1_mem[1023:0];
+   reg [31:0] data2_mem[1023:0];
+   reg [31:0] trig0_q;
+   reg [31:0] data0_q;
+   reg [31:0] data1_q;
+   reg [31:0] data2_q;
+   wire       wr_en;
+   wire [11:2] wr_addr;
 
-    //--------------------------------------------------------------------------
-    // Logging logic (Block RAM's)
-    //--------------------------------------------------------------------------
-    reg  [31:0] trig0_mem[1023:0];
-    reg  [31:0] data0_mem[1023:0];
-    reg  [31:0] data1_mem[1023:0];
-    reg  [31:0] data2_mem[1023:0];
-    reg  [31:0] trig0_q;
-    reg  [31:0] data0_q;
-    reg  [31:0] data1_q;
-    reg  [31:0] data2_q;
-    wire        wr_en;
-    wire [11:2] wr_addr;
+   assign wr_addr = mem_pos;
+   assign wr_en   = running & !done;
 
-    assign wr_addr = mem_pos;
-    assign wr_en   = running & !done;
-
-    always @(posedge wb_clk_i) begin
+   always @(posedge wb_clk_i) begin
       trig0_q <= trig0_i;
       data0_q <= data0_i;
       data1_q <= data1_i;
       data2_q <= data2_i;
-    end
+   end
 
-    always @(posedge wb_clk_i) begin
+   always @(posedge wb_clk_i) begin
       if (wr_en) begin
-        trig0_mem[wr_addr] <= trig0_q;
-        data0_mem[wr_addr] <= data0_q;
-        data1_mem[wr_addr] <= data1_q;
-        data2_mem[wr_addr] <= data2_q;
+	 trig0_mem[wr_addr] <= trig0_q;
+	 data0_mem[wr_addr] <= data0_q;
+	 data1_mem[wr_addr] <= data1_q;
+	 data2_mem[wr_addr] <= data2_q;
       end
       trig0_rd <= trig0_mem[wb_adr_i[11:2]];
       data0_rd <= data0_mem[wb_adr_i[11:2]];
       data1_rd <= data1_mem[wb_adr_i[11:2]];
       data2_rd <= data2_mem[wb_adr_i[11:2]];
-    end
+   end
 endmodule
