@@ -1,9 +1,18 @@
 #!/usr/bin/python
 import sys
 import datetime
+import ConfigParser
 
 version = 1.0
 clk_period = 20 # in ns
+sample_cnt = 1024
+
+class Signal:
+    def __init__(self, name, offset, bits, ascii_id):
+        self.name = name
+        self.bits = bits
+        self.offset = offset
+        self.id = ascii_id
 
 def vcd_header():
     header = ("$date\n"
@@ -17,51 +26,80 @@ def vcd_header():
               "$end")
     return header.format(datetime.datetime.now().ctime(), version)
 
-if __name__ == "__main__":
-    args = sys.argv[1:]
-    print args[0]
+def read_config():
+    cfg = ConfigParser.RawConfigParser()
+    cfg.read('dump2vcd.conf')
+    return cfg
 
-    f = open(args[0], 'r')
+def read_dump(filename):
+    f = open(filename, 'r')
     data = []
     for line in f:
         addr_str, data_str = line.split(':')
         data.extend(data_str.strip().split('\t'))
 
-    trig0 = []
-    data0 = []
-    data1 = []
-    data2 = []
-    for i in range(1024):
-        trig0.append(data[i + 1024*0])
-        data0.append(data[i + 1024*1])
-        data1.append(data[i + 1024*2])
-        data2.append(data[i + 1024*3])
+    return data
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+
+    data = read_dump(args[0])
+    cfg = read_config()
+
+    # build signals
+    signals = []
+    i = 1
+    offset = 0
+    for signal in cfg.options('signals'):
+        bit_cnt = int(cfg.get('signals', signal))
+        signals.append(Signal(signal, offset, bit_cnt, chr(33 + i)))
+        offset += bit_cnt
+        if signal != 'empty':
+            i += 1
 
     print vcd_header()
     print "$scope module trace_logger $end"
     print "$var wire 1 {0} clk $end".format(chr(33+0))
-    print "$var wire 32 {0} trig0 $end".format(chr(33+1))
-    print "$var wire 32 {0} data0 $end".format(chr(33+2))
-    print "$var wire 32 {0} data1 $end".format(chr(33+3))
-    print "$var wire 32 {0} data2 $end".format(chr(33+4))
+
+    for signal in signals:
+        if signal.name != 'empty':
+            print "$var wire {0} {1} {2} $end".format(signal.bits, signal.id,
+                                                      signal.name)
     print "$upscope $end"
     print "$enddefinitions $end"
     print "$dumpvars"
-    print "1{0}".format(chr(33+0))
-    print "b000000000000000000 {0}".format(chr(33+1))
-    print "b000000000000000000 {0}".format(chr(33+2))
-    print "b000000000000000000 {0}".format(chr(33+3))
-    print "b000000000000000000 {0}".format(chr(33+4))
+    print "1{0}".format(chr(33+0)) # clk signal
+
+    for signal in signals:
+        if signal.name != 'empty':
+            binary = bin(0)[2:0].zfill(signal.bits)
+            if signal.bits > 1:
+                print "b{0} {1}".format(binary, signal.id)
+            else:
+                print "{0}{1}".format(binary, signal.id)
+
     print "$end"
 
-    for i in range(1024):
+    for i in range(sample_cnt):
         print "#{0}".format(i * clk_period)
         print "1{0}".format(chr(33+0))
 
-        print "b{0} {1}".format(bin(int(trig0[i], 16))[2:].zfill(32), chr(33+1))
-        print "b{0} {1}".format(bin(int(data0[i], 16))[2:].zfill(32), chr(33+2))
-        print "b{0} {1}".format(bin(int(data1[i], 16))[2:].zfill(32), chr(33+3))
-        print "b{0} {1}".format(bin(int(data2[i], 16))[2:].zfill(32), chr(33+4))
+        # Print signals
+        for signal in signals:
+            if signal.name != 'empty':
+                # Calculate in what 32-bit word the signal is
+                word_offset = int(signal.offset/32);
+                bit_offset = signal.offset - word_offset*32
+                # Get 32 bit value of the whole word
+                # TODO: support for signals > 32 bit
+                word_value = int(data[i + sample_cnt*word_offset], 16)
+                # Pick out the signal from the word
+                word_bin_value = bin(word_value)[2:].zfill(32)
+                bin_value = word_bin_value[bit_offset:bit_offset+signal.bits]
+                if signal.bits > 1:
+                    print "b{0} {1}".format(bin_value, signal.id)
+                else:
+                    print "{0}{1}".format(bin_value, signal.id)
 
         print "#{0}".format(i * clk_period + clk_period/2)
         print "0{0}".format(chr(33+0))
