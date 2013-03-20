@@ -27,8 +27,8 @@ addresses.
 
 As stated above, logging is started by writing the trigger value to
 address 0x0000.
-After that data is logged into a circular buffer until the trigger
-condition is met and then logging will continue for the amount
+After that, data is logged into a circular buffer, until the trigger
+condition is met. At this point, logging will continue for the amount
 of samples that have been configured in address 0x0004.
 Default number of samples is 32.
 
@@ -39,7 +39,7 @@ where it can be interpreted.
 Provided is a python script (dump2vcd.py) that accepts dumped data in the form
 gdb outputs with the 'x' command:
 0x00000000:	0x0000001	0x00000001	0x00000001	0x00000001
-0x00000004:	0x0000002	0x00000002	0x00000002	0x00000002
+0x00000010:	0x0000002	0x00000002	0x00000002	0x00000002
 
 i.e. <address>:\t<data>\t<data>\t<data>\t<data>
 
