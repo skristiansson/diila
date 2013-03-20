@@ -54,7 +54,7 @@ if __name__ == "__main__":
         bit_cnt = int(cfg.get('signals', signal))
         signals.append(Signal(signal, offset, bit_cnt, chr(33 + i)))
         offset += bit_cnt
-        if signal != 'empty':
+        if not signal.startswith('empty'):
             i += 1
 
     print vcd_header()
