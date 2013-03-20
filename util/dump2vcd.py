@@ -62,7 +62,7 @@ if __name__ == "__main__":
     print "$var wire 1 {0} clk $end".format(chr(33+0))
 
     for signal in signals:
-        if signal.name != 'empty':
+        if not signal.name.startswith('empty'):
             print "$var wire {0} {1} {2} $end".format(signal.bits, signal.id,
                                                       signal.name)
     print "$upscope $end"
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     print "1{0}".format(chr(33+0)) # clk signal
 
     for signal in signals:
-        if signal.name != 'empty':
+        if not signal.name.startswith('empty'):
             binary = bin(0)[2:0].zfill(signal.bits)
             if signal.bits > 1:
                 print "b{0} {1}".format(binary, signal.id)
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
         # Print signals
         for signal in signals:
-            if signal.name != 'empty':
+            if not signal.name.startswith('empty'):
                 # Calculate in what 32-bit word the signal is
                 word_offset = int(signal.offset/32);
                 bit_offset = signal.offset - word_offset*32
