@@ -1,9 +1,9 @@
 /*
- * Trace logger
+ * Device Independent Integrated Logic Analyzer
  *
  * Description
  *
- * Logs the signals 'trig0', 'data0', data1, ...
+ * Logs the signals 'trig0', 'data[DATA_WIDTH-1:0]
  * after a trigger event has occurred.
  *
  * WB interface:
@@ -11,15 +11,15 @@
  * Write Address 0x0004, Set post trigger count (default = 32)
  *
  * Read Address  0x0000 - 0x03ff, Read trig0 trace log
- * Read Address  0x0400 - 0x07ff, Read data0 trace log
- * Read Address  0x0800 - 0x0bff, Read data1 trace log
- * Read Address  0x0C00 - 0x0fff, Read data2 trace log
+ * Read Address  0x0400 - 0x07ff, Read data[95:64] trace log
+ * Read Address  0x0800 - 0x0bff, Read data[63:32] trace log
+ * Read Address  0x0C00 - 0x0fff, Read data[31:0] trace log
  *
  * (C) 2013, Stefan Kristiansson, stefan.kristiansson@saunalahti.fi
  */
 `timescale 1ns / 1ps
 
-module tracer
+module diila
   #(
     parameter DATA_WIDTH = 96 // Has to be a multiplier of 4
     )
