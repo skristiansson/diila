@@ -19,43 +19,50 @@
  */
 `timescale 1ns / 1ps
 
-module tracer(
-	      // WB
-	      input wire 	 wb_rst_i,
-	      input wire 	 wb_clk_i,
-	      input wire [31:0]  wb_dat_i,
-	      input wire [13:2]  wb_adr_i,
-	      input wire [3:0] 	 wb_sel_i,
-	      input wire 	 wb_we_i,
-	      input wire 	 wb_cyc_i,
-	      input wire 	 wb_stb_i,
-	      output wire [31:0] wb_dat_o,
-	      output reg 	 wb_ack_o,
-	      output wire 	 wb_err_o,
-	      output wire 	 wb_rty_o,
+module tracer
+  #(
+    parameter DATA_WIDTH = 96 // Has to be a multiplier of 4
+    )
+   (
+    // WB
+    input wire 			wb_rst_i,
+    input wire 			wb_clk_i,
+    input wire [31:0] 		wb_dat_i,
+    input wire [23:2] 		wb_adr_i,
+    input wire [3:0] 		wb_sel_i,
+    input wire 			wb_we_i,
+    input wire 			wb_cyc_i,
+    input wire 			wb_stb_i,
+    output wire [31:0] 		wb_dat_o,
+    output reg 			wb_ack_o,
+    output wire 		wb_err_o,
+    output wire 		wb_rty_o,
 
-	      // Tracer signals
-	      input wire [31:0]  trig0_i,
-	      input wire [31:0]  data0_i,
-	      input wire [31:0]  data1_i,
-	      input wire [31:0]  data2_i
+    // Tracer signals
+    input wire [31:0] 		trig_i,
+    input wire [DATA_WIDTH-1:0] data_i
 );
+   localparam DATA_WORDS = DATA_WIDTH/32;
    //---------------------------------------------------------------------------
    // Wishbone
    //---------------------------------------------------------------------------
    reg [31:0] 			 trigger;
-   reg [31:0] 			 trig0_rd;
-   reg [31:0] 			 data0_rd;
-   reg [31:0] 			 data1_rd;
-   reg [31:0] 			 data2_rd;
+   reg [31:0] 			 trig_rd;
+   reg [DATA_WIDTH-1:0] 	 data_rd;
+   wire [31:0] 			 data_wb[1:DATA_WORDS];
    reg 				 new_trig;
    reg [9:0] 			 post_trig_done_cnt;
+   genvar 			 i;
+
+   generate
+      for (i = 0; i < DATA_WORDS; i = i + 1) begin : to_32bit
+	 assign data_wb[DATA_WORDS-i] = data_rd[(32*(i+1))-1:32*i];
+      end
+   endgenerate
+
    // Read
-   assign wb_dat_o = (wb_adr_i[13:12] == 2'b00) ? trig0_rd :
-                     (wb_adr_i[13:12] == 2'b01) ? data0_rd :
-                     (wb_adr_i[13:12] == 2'b10) ? data1_rd :
-                     (wb_adr_i[13:12] == 2'b11) ? data2_rd :
-                     32'b0;
+   assign wb_dat_o = (wb_adr_i[23:12] == 0) ? trig_rd :
+		     data_wb[wb_adr_i[23:12]];
 
    // Write
    always @(posedge wb_clk_i) begin
@@ -98,7 +105,7 @@ module tracer(
      if (wb_rst_i | new_trig) begin
 	trig_pos <= 0;
 	trig_hit <= 0;
-     end else if (trig0_i == trigger & !trig_hit) begin
+     end else if (trig_i == trigger & !trig_hit) begin
 	trig_pos <= mem_pos + 1;
 	trig_hit <= 1;
      end
@@ -124,13 +131,11 @@ module tracer(
    //---------------------------------------------------------------------------
    // Logging logic (Block RAM's)
    //---------------------------------------------------------------------------
-   reg  [31:0] trig0_mem[1023:0];
-   reg [31:0]  data0_mem[1023:0];
-   reg [31:0]  data1_mem[1023:0];
-   reg [31:0]  data2_mem[1023:0];
-   wire        wr_en;
-   wire [11:2] wr_addr;
-   wire [11:2] rd_addr;
+   reg [31:0]           trig_mem[1023:0];
+   reg [DATA_WIDTH-1:0] data_mem[1023:0];
+   wire                 wr_en;
+   wire [11:2]          wr_addr;
+   wire [11:2]          rd_addr;
 
    assign wr_addr = mem_pos;
    assign rd_addr = wb_adr_i[11:2] +
@@ -139,14 +144,10 @@ module tracer(
 
    always @(posedge wb_clk_i) begin
       if (wr_en) begin
-	 trig0_mem[wr_addr] <= trig0_i;
-	 data0_mem[wr_addr] <= data0_i;
-	 data1_mem[wr_addr] <= data1_i;
-	 data2_mem[wr_addr] <= data2_i;
+	 trig_mem[wr_addr] <= trig_i;
+	 data_mem[wr_addr] <= data_i;
       end
-      trig0_rd <= trig0_mem[rd_addr];
-      data0_rd <= data0_mem[rd_addr];
-      data1_rd <= data1_mem[rd_addr];
-      data2_rd <= data2_mem[rd_addr];
+      trig_rd <= trig_mem[rd_addr];
+      data_rd <= data_mem[rd_addr];
    end
 endmodule
