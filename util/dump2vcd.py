@@ -58,7 +58,7 @@ if __name__ == "__main__":
             i += 1
 
     print vcd_header()
-    print "$scope module trace_logger $end"
+    print "$scope module diila $end"
     print "$var wire 1 {0} clk $end".format(chr(33+0))
 
     for signal in signals:
