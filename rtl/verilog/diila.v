@@ -8,7 +8,7 @@
  *
  * WB interface:
  * Write Address 0x0000, Arm the trigger
- * Write Address 0x0004, Set post trigger count (default = 32)
+ * Write Address 0x0001, Set post trigger count (default = 32)
  *
  * Read Address  0x0000 - 0x03ff, Read trig0 trace log
  * Read Address  0x0400 - 0x07ff, Read data[95:64] trace log
@@ -74,7 +74,7 @@ module diila
 	 if (wb_adr_i == 0) begin
 	    trigger  <= wb_dat_i;
 	    new_trig <= 1;
-         end else if (wb_adr_i == 4) begin
+         end else if (wb_adr_i == 1) begin
 	    post_trig_done_cnt <= wb_dat_i[9:0];
 	 end
       end
