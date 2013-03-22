@@ -40,6 +40,7 @@ module diila
     output 		   wb_rty_o,
 
     // Tracer signals
+    input 		   storage_en,
     input [31:0] 	   trig_i,
     input [DATA_WIDTH-1:0] data_i
 );
@@ -154,7 +155,7 @@ module diila
    assign wr_addr = mem_pos;
    assign rd_addr = wb_adr_i[11:2] +
 		    ((trig_pos + post_trig_done_cnt) - 10'd1023);
-   assign wr_en   = !done;
+   assign wr_en   = storage_en & !done;
 
    always @(posedge wb_clk_i) begin
       if (wr_en) begin
