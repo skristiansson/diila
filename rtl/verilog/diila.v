@@ -26,22 +26,22 @@ module diila
     )
    (
     // WB
-    input wire 			wb_rst_i,
-    input wire 			wb_clk_i,
-    input wire [31:0] 		wb_dat_i,
-    input wire [23:2] 		wb_adr_i,
-    input wire [3:0] 		wb_sel_i,
-    input wire 			wb_we_i,
-    input wire 			wb_cyc_i,
-    input wire 			wb_stb_i,
-    output wire [31:0] 		wb_dat_o,
-    output reg 			wb_ack_o,
-    output wire 		wb_err_o,
-    output wire 		wb_rty_o,
+    input 		   wb_rst_i,
+    input 		   wb_clk_i,
+    input [31:0] 	   wb_dat_i,
+    input [23:2] 	   wb_adr_i,
+    input [3:0] 	   wb_sel_i,
+    input 		   wb_we_i,
+    input 		   wb_cyc_i,
+    input 		   wb_stb_i,
+    output [31:0] 	   wb_dat_o,
+    output reg 		   wb_ack_o,
+    output 		   wb_err_o,
+    output 		   wb_rty_o,
 
     // Tracer signals
-    input wire [31:0] 		trig_i,
-    input wire [DATA_WIDTH-1:0] data_i
+    input [31:0] 	   trig_i,
+    input [DATA_WIDTH-1:0] data_i
 );
    localparam DATA_WORDS = DATA_WIDTH/32;
    //---------------------------------------------------------------------------
