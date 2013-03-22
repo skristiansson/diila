@@ -9,6 +9,7 @@
  * WB interface:
  * Write Address 0x0000, Arm the trigger
  * Write Address 0x0001, Set post trigger count (default = 32)
+ * Write Address 0x0002, Set trigger skip count (default = 0)
  *
  * Read Address  0x0000 - 0x03ff, Read trig0 trace log
  * Read Address  0x0400 - 0x07ff, Read data[95:64] trace log
@@ -52,6 +53,8 @@ module diila
    wire [31:0] 			 data_wb[1:DATA_WORDS];
    reg 				 new_trig;
    reg [9:0] 			 post_trig_done_cnt;
+   reg [31:0] 			 trig_skip;
+   reg [31:0] 			 trig_cnt;
    genvar 			 i;
 
    generate
@@ -70,12 +73,16 @@ module diila
       if (wb_rst_i) begin
 	 trigger <= 32'h00000000;
 	 post_trig_done_cnt <= 10'd32;
+	 trig_skip <= 32'd0;
       end else if (wb_stb_i & wb_cyc_i & wb_we_i) begin
 	 if (wb_adr_i == 0) begin
 	    trigger  <= wb_dat_i;
 	    new_trig <= 1;
          end else if (wb_adr_i == 1) begin
 	    post_trig_done_cnt <= wb_dat_i[9:0];
+         end else if (wb_adr_i == 2) begin
+	    // Setting this to 0xffffffff (-1) will disable trigger
+	    trig_skip <= wb_dat_i;
 	 end
       end
    end
@@ -100,12 +107,13 @@ module diila
    reg [9:0]  post_trig_cnt;
    reg        trig_hit;
    reg        done;
+   wire [31:0] next_trig_cnt = (trig_i == trigger) ? trig_cnt + 1 : trig_cnt;
 
    always @(posedge wb_clk_i)
      if (wb_rst_i | new_trig) begin
 	trig_pos <= 0;
 	trig_hit <= 0;
-     end else if (trig_i == trigger & !trig_hit) begin
+     end else if (!trig_hit & next_trig_cnt >= (trig_skip + 1)) begin
 	trig_pos <= mem_pos + 1;
 	trig_hit <= 1;
      end
@@ -115,6 +123,12 @@ module diila
        post_trig_cnt <= 0;
      else if (trig_hit & !done)
        post_trig_cnt <= post_trig_cnt + 1;
+
+   always @(posedge wb_clk_i)
+     if (wb_rst_i | new_trig)
+       trig_cnt <= 0;
+     else
+       trig_cnt <= next_trig_cnt;
 
    always @(posedge wb_clk_i)
      if (wb_rst_i)

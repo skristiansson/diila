@@ -16,6 +16,7 @@ with the following address space (assuming a DATA_WIDTH of 96):
 
  Write Address 0x0000:          Set trigger and start logging
  Write Address 0x0001:          Set post trigger count (default = 32)
+ Write Address 0x0002:          Set trigger skip count (default = 0)
 
  Read Address  0x0000 - 0x03ff: Read trig trace log
  Read Address  0x0400 - 0x07ff: Read data[95:64] trace log
@@ -31,6 +32,10 @@ After that, data is logged into a circular buffer, until the trigger
 condition is met. At this point, logging will continue for the amount
 of samples that have been configured in address 0x0001.
 Default number of samples is 32.
+
+By writing to address 0x0002, the trigger condition can be skipped for
+a certain amount of times. Setting this to 0xffffffff will completely
+disable the trigger.
 
 Dumping data and converting to VCD
 ==================================
