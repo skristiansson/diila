@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import sys
 import datetime
+import collections
 import ConfigParser
 
 version = 1.0
@@ -27,7 +28,7 @@ def vcd_header():
     return header.format(datetime.datetime.now().ctime(), version)
 
 def read_config():
-    cfg = ConfigParser.RawConfigParser()
+    cfg = ConfigParser.RawConfigParser(dict_type=collections.OrderedDict)
     cfg.read('dump2vcd.conf')
     return cfg
 
