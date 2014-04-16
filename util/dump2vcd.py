@@ -89,14 +89,17 @@ if __name__ == "__main__":
         for signal in signals:
             if not signal.name.startswith('empty'):
                 # Calculate in what 32-bit word the signal is
-                word_offset = int(signal.offset/32);
-                bit_offset = signal.offset - word_offset*32
-                # Get 32 bit value of the whole word
-                # TODO: support for signals > 32 bit
-                word_value = int(data[i + sample_cnt*word_offset], 16)
-                # Pick out the signal from the word
-                word_bin_value = bin(word_value)[2:].zfill(32)
-                bin_value = word_bin_value[bit_offset:bit_offset+signal.bits]
+                first_word = int(signal.offset/32);
+                last_word = int((signal.offset + signal.bits - 1)/32);
+                bit_offset = signal.offset - first_word*32
+                # Get bit vector composed of all needed words
+                def get_word_bits(word):
+                    word_value = int(data[i + sample_cnt*word], 16)
+                    return bin(word_value)[2:].zfill(32)
+                words_needed = range(first_word, last_word+1)
+                words_bin_value = "".join(map(get_word_bits, words_needed))
+                # Pick out the signal from the words
+                bin_value = words_bin_value[bit_offset:bit_offset+signal.bits]
                 if signal.bits > 1:
                     print "b{0} {1}".format(bin_value, signal.id)
                 else:
