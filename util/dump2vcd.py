@@ -81,6 +81,7 @@ if __name__ == "__main__":
 
     print "$end"
 
+    prev_value = dict()
     for i in range(sample_cnt):
         print "#{0}".format(i * clk_period)
         print "1{0}".format(chr(33+0))
@@ -100,10 +101,12 @@ if __name__ == "__main__":
                 words_bin_value = "".join(map(get_word_bits, words_needed))
                 # Pick out the signal from the words
                 bin_value = words_bin_value[bit_offset:bit_offset+signal.bits]
-                if signal.bits > 1:
-                    print "b{0} {1}".format(bin_value, signal.id)
-                else:
-                    print "{0}{1}".format(bin_value, signal.id)
+                if (not signal in prev_value or bin_value != prev_value[signal]):
+                    if signal.bits > 1:
+                        print "b{0} {1}".format(bin_value, signal.id)
+                    else:
+                        print "{0}{1}".format(bin_value, signal.id)
+                prev_value[signal] = bin_value
 
         print "#{0}".format(i * clk_period + clk_period/2)
         print "0{0}".format(chr(33+0))
